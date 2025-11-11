@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+<h1>Bienvenido a la página de inicio</h1>
+{% if 'username' in session %}
+<p>Has iniciado sesión como {{ session['username'] }} ({{ session['role'] }}).</p>
+{% else %}
+<p>No has iniciado sesión.</p>
+{% endif %}
+{% endblock %}

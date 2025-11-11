@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Mapa de Recorrido{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h2 class="text-center mb-4">Ruta de Entregas</h2>
+
+    <div class="map-container">
+        {{ mapa|safe }}
+    </div>
+</div>
+
+<style>
+    .map-container {
+        width: 100%;
+        height: 70vh; /* 70% de la altura de la ventana */
+    }
+    .map-container iframe {
+        width: 100%;
+        height: 100%;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}
