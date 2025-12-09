@@ -3,29 +3,144 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-<h1>Dashboard</h1>
-<p>Bienvenido a tu dashboard, {{ session['username'] }}</p>
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="display-6">Dashboard</h1>
+            <p class="lead">Bienvenido, <strong>{{ session['username'] }}</strong>.</p>
+            <hr>
+        </div>
+    </div>
 
-{% if session['role'] == 'admin' %}
-    <h2>Panel de Administracion</h2>
-    <ul>
-        <li>Gestionar usuarios</li>
-        <li>Ver estadisticas del sistema</li>
-        <li>Configurar parametros globales</li>
-    </ul>
-{% elif session['role'] == 'editor' %}
-    <h2>Panel de Editor</h2>
-    <ul>
-        <li>Crear nuevo articulo</li>
-        <li>Editar articulos existentes</li>
-        <li>Moderar comentarios</li>
-    </ul>
-{% else %}
-    <h2>Panel de Usuario</h2>
-    <ul>
-        <li>Ver tus publicaciones</li>
-        <li>Actualizar perfil</li>
-        <li>Gestionar suscripciones</li>
-    </ul>
-{% endif %}
+    <!-- Mensajes Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            
+            <!-- PANEL DE ADMINISTRADOR -->
+            {% if session['role'] == 'admin' %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0"><i class="fas fa-user-shield me-2"></i>Panel de Administración</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="{{ url_for('gestionar_usuarios') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div><i class="fas fa-users-cog me-2 text-primary"></i> Gestionar Usuarios</div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </a>
+                        <a href="{{ url_for('crear_pedido') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div><i class="fas fa-plus-circle me-2 text-success"></i> Crear Nuevo Pedido</div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </a>
+                        <a href="{{ url_for('ver_pedido') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div><i class="fas fa-search me-2 text-info"></i> Editar/Buscar Pedidos</div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </a>
+                         <a href="{{ url_for('ver_mapa') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div><i class="fas fa-map-marked-alt me-2 text-warning"></i> Ver Mapa de Rutas</div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </a>
+                         <a href="{{ url_for('reporte_pedidos') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div><i class="fas fa-chart-line me-2 text-secondary"></i> Ver Reporte de Pedidos</div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </a>
+                        <a href="{{ url_for('gestionar_productos') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div><i class="fas fa-boxes me-2 text-primary"></i> Gestionar Productos / Stock</div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL DE EDITOR -->
+            {% elif session['role'] == 'editor' %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-edit me-2"></i>Panel de Editor</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="{{ url_for('crear_pedido') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div><i class="fas fa-file-invoice me-2 text-success"></i> Crear Contenido (Nuevo Pedido)</div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </a>
+                        <a href="{{ url_for('ver_pedido') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div><i class="fas fa-pen-square me-2 text-info"></i> Editar Contenido (Buscar Pedido)</div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </a>
+                        <a href="{{ url_for('gestionar_usuarios') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div><i class="fas fa-user-plus me-2 text-secondary"></i> Gestionar Conductores</div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </a>
+                         <a href="{{ url_for('ver_mapa') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div><i class="fas fa-map me-2 text-warning"></i> Ver Mapa</div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </a>
+                        <a href="{{ url_for('reporte_pedidos') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div><i class="fas fa-chart-line me-2 text-dark"></i> Ver Reportes</div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </a>
+                        <a href="{{ url_for('gestionar_productos') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div><i class="fas fa-boxes me-2 text-primary"></i> Gestionar Productos / Stock</div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL DE CONDUCTOR (DRIVER) -->
+            {% else %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-truck me-2"></i>Panel de Conductor</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="{{ url_for('ver_mapa') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-map-marker-alt me-2 text-danger"></i> Ver Mi Recorrido
+                                <small class="d-block text-muted ms-4">Consultar mapa de entregas.</small>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </a>
+
+                        <a href="{{ url_for('ver_pedido') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-box-open me-2 text-primary"></i> Consultar Pedido
+                                <small class="d-block text-muted ms-4">Buscar detalles de una entrega específica.</small>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </a>
+                        
+                        <a href="{{ url_for('reporte_pedidos') }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-history me-2 text-secondary"></i> Historial de Entregas (Reportes)
+                                <small class="d-block text-muted ms-4">Ver listado completo de pedidos.</small>
+                            </div>
+                            <i class="fas fa-chevron-right text-muted"></i>
+                        </a>
+                        
+                        <!-- BOTÓN DE RUTA TURÍSTICA (DEMO) -->
+                        <a href="{{ url_for('ver_mapa') }}" class="list-group-item list-group-item-action bg-light">
+                            <i class="fas fa-route me-2 text-danger"></i> <strong>Ver Ruta Sugerida (Demo)</strong>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
 {% endblock %}

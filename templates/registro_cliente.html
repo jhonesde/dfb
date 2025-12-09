@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Registro de Clientes{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-lg border-0 rounded-4">
+                <div class="card-body p-4 p-md-5">
+                    <h2 class="card-title text-center mb-4 fw-bold text-primary">Regístrate como Cliente</h2>
+                    <p class="text-center text-muted mb-4">Crea tu cuenta y empieza a hacer pedidos hoy mismo.</p>
+
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            <div class="alert-container mb-3">
+                            {% for category, message in messages %}
+                                <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+                                    {{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
+                            {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+
+                    <form action="{{ url_for('registro_cliente') }}" method="POST">
+                        
+                        <h5 class="fw-semibold mb-3 mt-3 text-secondary">Datos de la Cuenta</h5>
+                        <div class="mb-3">
+                            <label for="username" class="form-label fw-semibold">Usuario (Para Iniciar Sesión)</label>
+                            <input type="text" class="form-control" id="username" name="username" required aria-describedby="userHelp" placeholder="Ej: miusuario123">
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label fw-semibold">Contraseña</label>
+                            <input type="password" class="form-control" id="password" name="password" required placeholder="Mínimo 6 caracteres">
+                        </div>
+
+                        <h5 class="fw-semibold mb-3 mt-4 text-secondary">Datos Personales y de Contacto</h5>
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label fw-semibold">Nombre Completo</label>
+                            <input type="text" class="form-control" id="nombre" name="nombre" required placeholder="Ej: Juan Pérez Roca">
+                        </div>
+                        <div class="mb-3">
+                            <label for="telefono" class="form-label fw-semibold">Teléfono</label>
+                            <input type="tel" class="form-control" id="telefono" name="telefono" required placeholder="Ej: 77777777">
+                        </div>
+                        <div class="mb-3">
+                            <label for="direccion" class="form-label fw-semibold">Dirección de Entrega Principal</label>
+                            <input type="text" class="form-control" id="direccion" name="direccion" required placeholder="Ej: Av. Las Américas #123">
+                        </div>
+                        <div class="mb-4">
+                            <label for="ciudad" class="form-label fw-semibold">Ciudad</label>
+                            <select class="form-select" id="ciudad" name="ciudad" required>
+                                <option value="" disabled selected>Selecciona tu ciudad</option>
+                                <option value="Cochabamba">Cochabamba</option>
+                                <option value="La Paz">La Paz</option>
+                                <option value="Santa Cruz">Santa Cruz</option>
+                                <option value="Oruro">Oruro</option>
+                                <option value="Potosi">Potosí</option>
+                                <option value="Chuquisaca">Chuquisaca</option>
+                            </select>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg rounded-pill shadow-sm">
+                                <i class="fas fa-user-plus me-2"></i> Crear Cuenta
+                            </button>
+                        </div>
+                        
+                        <div class="text-center mt-3">
+                            <a href="{{ url_for('login') }}" class="text-decoration-none text-secondary">¿Ya tienes cuenta? Inicia Sesión</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

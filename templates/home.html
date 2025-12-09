@@ -1,12 +1,138 @@
 {% extends "base.html" %}
 
-{% block title %}Inicio{% endblock %}
+{% block title %}FERKEBRA{% endblock %}
 
 {% block content %}
-<h1>Bienvenido a la página de inicio</h1>
-{% if 'username' in session %}
-<p>Has iniciado sesión como {{ session['username'] }} ({{ session['role'] }}).</p>
-{% else %}
-<p>No has iniciado sesión.</p>
-{% endif %}
+
+<div class="hero-section">
+    <h1 class="hero-title">BIENVENIDO A FERKEBRA</h1>
+
+    {% if 'username' in session %}
+        <p class="hero-subtitle">Has iniciado sesión como {{ session['username'] }} ({{ session['role'] }}).</p>
+        <a href="{{ url_for('dashboard') }}" class="hero-button">Ir a tu Panel</a>
+    {% else %}
+        <p class="hero-subtitle">Entregamos agua en el tropico</p>
+        <a href="{{ url_for('login') }}" class="hero-button">Iniciar Sesión</a>
+    {% endif %}
+</div>
+
+<div class="content-section">
+    <h2>Crea tu cuenta y ordena</h2>
+    <p>Descubre la forma más fácil y rápida de obtener agua fresca directamente en tu puerta.</p>
+    <a href="{{ url_for('login') }}" class="btn btn-outline-light btn-lg mt-3">¡Registrate ahora!</a>
+</div>
+
+<style>
+    /* Estilos globales para el body de esta página */
+    body {
+        background-color: #212529; /* Fondo oscuro para toda la página */
+        color: #f8f9fa; /* Color de texto por defecto para el body */
+    }
+
+    /* Sección Principal de Bienvenida (El cuadro grande de colores) */
+    .hero-section {
+        background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+        background-size: 400% 400%;
+        color: white;
+        text-align: center;
+        padding: 100px 20px; /* Un poco menos de padding para que no sea tan alto */
+
+        /* CÓDIGO NUEVO/MODIFICADO AQUÍ */
+        border-radius: 15px; /* Bordes suaves, ¡aquí está el truco! */
+        margin: 20px; /* Un pequeño margen para que los bordes redondeados se noten */
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); /* Una sombra más pronunciada */
+
+        animation: gradient-flow 10s ease infinite;
+    }
+
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 700;
+        margin-bottom: 20px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    }
+
+    .hero-subtitle {
+        font-size: 1.25rem;
+        font-weight: 300;
+        margin-bottom: 30px;
+    }
+
+    .hero-button {
+        background-color: white;
+        color: #333;
+        padding: 12px 25px;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 600;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease; /* Transición suave para hover */
+    }
+
+    .hero-button:hover {
+        transform: scale(1.08) translateY(-3px); /* Se agranda y "flota" un poco más */
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Sección de Contenido Adicional (Lo de "Crea tu cuenta y ordena") */
+    .content-section {
+        text-align: center;
+        padding: 60px 20px;
+        margin-top: 40px; /* Espacio entre el hero y esta sección */
+        background-color: #343a40; /* Un color de fondo más oscuro para que resalte */
+        border-radius: 10px; /* Bordes suaves también aquí */
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        margin-left: 20px; /* Alineado con el margen del hero */
+        margin-right: 20px; /* Alineado con el margen del hero */
+    }
+    .content-section h2 {
+        font-size: 2.5rem;
+        margin-bottom: 20px;
+        color: #f8f9fa; /* Color de texto claro */
+    }
+    .content-section p {
+        font-size: 1.1rem;
+        margin-bottom: 30px;
+        color: #ced4da; /* Un gris más claro para el texto */
+    }
+
+    /* Animaciones */
+    @keyframes gradient-flow {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    @keyframes fade-in-up {
+        from {
+            opacity: 0;
+            transform: translateY(25px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .hero-title, .hero-subtitle, .hero-button {
+        animation: fade-in-up 0.8s ease-out forwards;
+        opacity: 0;
+    }
+
+    .hero-subtitle {
+        animation-delay: 0.2s;
+    }
+    .hero-button {
+        animation-delay: 0.4s;
+    }
+
+    /* Animación para la sección de contenido */
+    .content-section {
+        animation: fade-in-up 0.8s ease-out forwards;
+        opacity: 0;
+        animation-delay: 0.6s; /* Para que aparezca después del hero */
+    }
+
+</style>
+
 {% endblock %}

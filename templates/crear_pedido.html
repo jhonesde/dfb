@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+
+{% block title %}Crear Nuevo Pedido{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="fw-bold text-primary mb-4">
+        <i class="fas fa-file-invoice-dollar me-2"></i> 
+        {% if session['role'] == 'cliente' %}
+            Realizar un Nuevo Pedido
+        {% else %}
+            Crear Pedido (Admin/Editor)
+        {% endif %}
+    </h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="alert-container mb-3">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- EL FORMULARIO DEBE RODEAR TODO EL CONTENIDO PARA ENVIAR DATOS -->
+    <form method="POST" action="{{ url_for('crear_pedido') }}">
+        <div class="row mb-4">
+            
+            <!-- Bloque de Datos del Pedido -->
+            <div class="col-lg-5">
+                <div class="card shadow-sm border-0 rounded-3 p-3">
+                    <h5 class="fw-semibold text-secondary border-bottom pb-2 mb-3">Datos del Pedido</h5>
+
+                    <div class="mb-3">
+                        <label for="fecha" class="form-label fw-semibold">Fecha</label>
+                        <input type="date" class="form-control" id="fecha" name="fecha" value="{{ fecha_hoy }}" required>
+                    </div>
+
+                    {% if session['role'] != 'cliente' %}
+                        <!-- Campos solo para Admin/Editor -->
+                        <div class="mb-3">
+                            <label for="numero_pedido" class="form-label fw-semibold">Número de Pedido (ID)</label>
+                            <input type="text" class="form-control" id="numero_pedido" name="numero_pedido" placeholder="Ej: PED005" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="cliente" class="form-label fw-semibold">Nombre del Cliente</label>
+                            <input type="text" class="form-control" id="cliente" name="cliente" required placeholder="Ej: Andrés Mamani">
+                        </div>
+                    {% else %}
+                        <!-- Muestra el nombre del cliente logeado y lo envía oculto -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Cliente</label>
+                            <p class="form-control-static fw-bold text-primary">{{ session.get('nombre_completo', session['username']) }}</p>
+                            <!-- CAMPO CRÍTICO: Envía el nombre del cliente logeado (USADO EN FLASK) -->
+                            <input type="hidden" name="cliente_nombre_hidden" value="{{ session.get('nombre_completo', session['username']) }}">
+                            <!-- Campo oculto para cumplir con la necesidad del formulario, aunque no se usa en el POST del cliente -->
+                            <input type="hidden" name="numero_pedido" value="AUTOGENERADO">
+                        </div>
+                    {% endif %}
+
+                    <h5 class="fw-semibold text-secondary border-bottom pb-2 mt-4 mb-3">Datos de Contacto y Entrega</h5>
+                    <div class="mb-3">
+                        <label for="telefono" class="form-label fw-semibold">Teléfono</label>
+                        <input type="tel" class="form-control" id="telefono" name="telefono" placeholder="77777777" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="direccion" class="form-label fw-semibold">Dirección</label>
+                        <input type="text" class="form-control" id="direccion" name="direccion" placeholder="Av. Principal #456" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="ciudad" class="form-label fw-semibold">Ciudad</label>
+                        <input type="text" class="form-control" id="ciudad" name="ciudad" placeholder="Cochabamba" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bloque de Artículos y Total -->
+            <div class="col-lg-7">
+                <div class="card shadow-sm border-0 rounded-3 p-3 h-100">
+                    <h5 class="fw-semibold text-secondary border-bottom pb-2 mb-3">Artículos del Pedido</h5>
+
+                    <div id="articulos-container">
+                        <!-- Contenedor donde se insertarán las filas de productos -->
+                    </div>
+
+                    <!-- Plantilla para clonar con JS -->
+                    <div class="articulo-template d-none">
+                        <div class="row g-3 mb-3 articulo-item p-2 border rounded-3 bg-light align-items-end">
+                            <div class="col-md-5">
+                                <label class="form-label fw-semibold">Producto</label>
+                                <select class="form-select item_nombre" name="item_nombre[]" onchange="seleccionarProducto(this)" required>
+                                    <option value="" data-precio="0" data-stock="0" selected>Seleccione Producto</option>
+                                    <!-- Opciones insertadas por JS al clonar -->
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Cantidad</label>
+                                <input type="number" class="form-control item_cantidad" name="item_cantidad[]" min="1" value="1" oninput="calcularTotalParcial(this)" required>
+                                <small class="text-danger stock-warning fw-bold d-block mt-1"></small>
+                            </div>
+                            <div class="col-md-3">
+                                <p class="mb-0 fw-bold subtotal-display text-success">Bs. 0.00</p>
+                                <!-- Campo oculto CRÍTICO para el precio unitario. Flask lo recoge. -->
+                                <input type="hidden" class="item_precio_unitario_hidden" name="item_precio_hidden[]" value="0.00">
+                            </div>
+                            <div class="col-md-1">
+                                <button type="button" class="btn btn-sm btn-outline-danger w-100 eliminar-articulo" onclick="eliminarArticulo(this)"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="button" class="btn btn-outline-secondary rounded-pill mt-3 mb-4" onclick="agregarArticulo()">
+                        <i class="fas fa-plus-circle me-2"></i> Agregar Otro Artículo
+                    </button>
+
+                    <!-- Resumen del Total -->
+                    <div class="text-end border-top pt-3 mt-auto">
+                        <h4 class="mb-0 fw-bold">
+                            Total Estimado: <span id="total-estimado" class="text-primary">Bs. 0.00</span>
+                        </h4>
+                    </div>
+                    
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill shadow-lg">
+                            <i class="fas fa-check-circle me-2"></i> Confirmar Pedido
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </form>
+</div>
+
+<!-- DATA JSON SEGURA (Usado para llenar el select en JS) -->
+<script id="productos-data" type="application/json">
+    {{ productos | tojson | safe }}
+</script>
+
+<script>
+    // --- LECTURA DE DATOS ---
+    let productosDB = [];
+    try {
+        const dataElement = document.getElementById('productos-data');
+        if (dataElement && dataElement.textContent) {
+            productosDB = JSON.parse(dataElement.textContent);
+        }
+    } catch (e) { console.error("Error JSON:", e); }
+    
+    // Genera las opciones de <select> una sola vez
+    const selectOptions = (function() {
+        let opts = '<option value="" data-precio="0" data-stock="0" selected>Seleccione Producto</option>';
+        productosDB.forEach(p => {
+            let disabled = p.stock <= 0 ? 'disabled' : '';
+            let lbl = `${p.nombre} (Bs. ${p.precio}) - Stock: ${p.stock}`;
+            if(p.stock <= 0) lbl += " [AGOTADO]";
+            // IMPORTANTE: El value es el nombre del producto (usado como ID en Firebase)
+            opts += `<option value="${p.nombre}" data-precio="${p.precio}" data-stock="${p.stock}" ${disabled}>${lbl}</option>`;
+        });
+        return opts;
+    })();
+
+    // --- MANEJO DE FILAS DINÁMICO ---
+
+    function crearFilaHTML() {
+        const templateDiv = document.querySelector('.articulo-template');
+        const templateItem = templateDiv.querySelector('.articulo-item');
+        
+        const nuevoArticulo = templateItem.cloneNode(true);
+        nuevoArticulo.classList.remove('d-none'); 
+
+        // Rellenar las opciones del select
+        const newSelect = nuevoArticulo.querySelector('.item_nombre');
+        newSelect.innerHTML = selectOptions; 
+
+        // Reconectar eventos para la nueva fila
+        newSelect.addEventListener('change', function() { seleccionarProducto(this); });
+        nuevoArticulo.querySelector('.item_cantidad').addEventListener('input', function() { calcularTotalParcial(this); });
+        
+        return nuevoArticulo;
+    }
+
+    function agregarArticulo() {
+        const container = document.getElementById('articulos-container');
+        const nuevaFila = crearFilaHTML();
+        container.appendChild(nuevaFila);
+        // Inicializar la cantidad a 1 y recalcular
+        nuevaFila.querySelector('.item_cantidad').value = 1;
+        calcularTotalGeneral();
+    }
+
+    function eliminarArticulo(button) {
+        const container = document.getElementById('articulos-container');
+        if (container.querySelectorAll('.articulo-item').length > 1) {
+             button.closest('.articulo-item').remove();
+        } else {
+            // Si es la última fila, la limpiamos
+            const itemContainer = button.closest('.articulo-item');
+            itemContainer.querySelector('.item_nombre').value = "";
+            itemContainer.querySelector('.item_cantidad').value = 0;
+            itemContainer.querySelector('.item_precio_unitario_hidden').value = 0;
+            itemContainer.querySelector('.subtotal-display').textContent = 'Bs. 0.00';
+        }
+        calcularTotalGeneral();
+    }
+
+
+    // --- LÓGICA DE CÁLCULO ---
+    
+    function seleccionarProducto(selectElement) {
+        const itemContainer = selectElement.closest('.articulo-item');
+        const cantidadInput = itemContainer.querySelector('.item_cantidad');
+        const precioHidden = itemContainer.querySelector('.item_precio_unitario_hidden');
+        const stockWarning = itemContainer.querySelector('.stock-warning');
+
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        const precio = parseFloat(selectedOption.getAttribute('data-precio') || 0);
+        const stock = parseInt(selectedOption.getAttribute('data-stock') || 0);
+        
+        // Asignar valores
+        precioHidden.value = precio.toFixed(2);
+        cantidadInput.setAttribute('max', stock);
+        
+        stockWarning.textContent = `Stock: ${stock}`;
+        stockWarning.classList.add(stock > 5 ? 'text-success' : 'text-danger');
+        
+        // Forzar cantidad al stock máximo si se supera
+        if (cantidadInput.value > stock) {
+            cantidadInput.value = stock;
+        } else if (cantidadInput.value < 1) {
+             cantidadInput.value = 1;
+        }
+
+        calcularTotalParcial(cantidadInput);
+    }
+
+    function calcularTotalParcial(inputElement) {
+        const itemContainer = inputElement.closest('.articulo-item');
+        const cantidad = parseInt(inputElement.value) || 0;
+        const precio = parseFloat(itemContainer.querySelector('.item_precio_unitario_hidden').value) || 0;
+        const stockMax = parseInt(inputElement.getAttribute('max')) || Infinity;
+        const subtotal = cantidad * precio;
+
+        // Validación visual
+        const stockWarning = itemContainer.querySelector('.stock-warning');
+        if (cantidad > stockMax) {
+            inputElement.value = stockMax; 
+        }
+
+        itemContainer.querySelector('.subtotal-display').textContent = `Bs. ${subtotal.toFixed(2)}`;
+        calcularTotalGeneral();
+    }
+
+    function calcularTotalGeneral() {
+        let totalGeneral = 0;
+        document.querySelectorAll('.articulo-item').forEach(item => {
+            const cantidad = parseInt(item.querySelector('.item_cantidad').value) || 0;
+            const precio = parseFloat(item.querySelector('.item_precio_unitario_hidden').value) || 0;
+            totalGeneral += cantidad * precio;
+        });
+        document.getElementById('total-estimado').textContent = `Bs. ${totalGeneral.toFixed(2)}`;
+    }
+
+    // Iniciar con un artículo al cargar
+    document.addEventListener('DOMContentLoaded', function() {
+        if (document.getElementById('articulos-container').children.length === 0) {
+            agregarArticulo();
+        }
+        calcularTotalGeneral();
+    });
+
+</script>
+{% endblock %}

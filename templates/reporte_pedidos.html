@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Reporte de Pedidos{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Encabezado y Botón Nuevo (Solo Admin/Editor) -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Reporte General de Pedidos</h2>
+        {% if session['role'] in ['admin', 'editor'] %}
+            <a href="{{ url_for('crear_pedido') }}" class="btn btn-success">
+                <i class="fas fa-plus me-2"></i>Nuevo Pedido
+            </a>
+        {% endif %}
+    </div>
+    
+    <!-- Mensajes Flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <!-- Tarjetas de Resumen -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-primary mb-3 shadow-sm">
+                <div class="card-header">Total de Pedidos</div>
+                <div class="card-body">
+                    <h5 class="card-title display-6">{{ pedidos|length }}</h5>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-success mb-3 shadow-sm">
+                <div class="card-header">Ingresos Totales (Estimado)</div>
+                <div class="card-body">
+                    <h5 class="card-title display-6">{{ "%.2f"|format(total_global) }} Bs</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla de Pedidos -->
+    {% if pedidos %}
+    <div class="table-responsive shadow-sm rounded">
+        <table class="table table-hover table-striped align-middle mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>Nro Pedido</th>
+                    <th>Fecha</th>
+                    <th>Cliente</th>
+                    <th>Estado</th>
+                    <th>Total (Bs)</th>
+                    <th>Conductor Asignado</th> <!-- Nueva Columna -->
+                    <th class="text-center">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in pedidos %}
+                <tr>
+                    <td><strong>{{ p.numero }}</strong></td>
+                    <td>{{ p.fecha }}</td>
+                    <td>
+                        {{ p.cliente }}<br>
+                        <small class="text-muted"><i class="fas fa-phone me-1"></i>{{ p.telefono }}</small>
+                    </td>
+                    <td>
+                        {% if p.estado == 'Entregado' %}
+                            <span class="badge bg-success">Entregado</span>
+                        {% elif p.estado == 'Pendiente' %}
+                            <span class="badge bg-warning text-dark">Pendiente</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ p.estado }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="fw-bold">{{ "%.2f"|format(p.total_calculado) }}</td>
+                    
+                    <!-- COLUMNA DE ASIGNACIÓN DE CONDUCTOR -->
+                    <td>
+                        {% if session['role'] in ['admin', 'editor'] %}
+                            <!-- Formulario para cambiar conductor (Solo Admin/Editor) -->
+                            <form action="{{ url_for('asignar_conductor') }}" method="POST" class="d-flex">
+                                <input type="hidden" name="numero_pedido" value="{{ p.numero }}">
+                                <select name="driver" class="form-select form-select-sm me-2" onchange="this.form.submit()">
+                                    <option value="Sin asignar" {% if p.driver_asignado == 'Sin asignar' %}selected{% endif %}>Sin asignar</option>
+                                    {% for driver in drivers %} <!-- Esta lista viene del flask_app.py -->
+                                        <option value="{{ driver }}" {% if p.driver_asignado == driver %}selected{% endif %}>{{ driver }}</option>
+                                    {% endfor %}
+                                </select>
+                            </form>
+                        {% else %}
+                            <!-- Drivers solo ven su nombre (solo lectura) -->
+                            <span class="badge bg-info text-dark">
+                                <i class="fas fa-id-badge me-1"></i>{{ p.driver_asignado or 'Sin asignar' }}
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <td class="text-center">
+                        <div class="d-flex justify-content-center gap-2">
+                            <!-- Botón Ver/Editar (Disponible para todos) -->
+                            <button class="btn btn-sm btn-outline-primary" 
+                                    onclick="copiarYBuscar('{{ p.numero }}')" 
+                                    title="Ver Detalles / Editar">
+                                <i class="fas fa-eye"></i>
+                            </button>
+
+                            <!-- Botón Borrar (SOLO Admin y Editor) -->
+                            {% if session['role'] in ['admin', 'editor'] %}
+                                <form action="{{ url_for('borrar_pedido', numero_pedido=p.numero) }}" method="POST" onsubmit="return confirm('¿Estás seguro de eliminar el pedido {{ p.numero }} permanentemente? Esta acción no se puede deshacer.');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar Pedido">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <div class="alert alert-info text-center">
+            <i class="fas fa-info-circle me-2"></i>No se encontraron pedidos registrados (o asignados a ti).
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    // Función para copiar el ID y redirigir al buscador
+    function copiarYBuscar(id) {
+        navigator.clipboard.writeText(id).then(function() {
+            // Redirigir a la página de búsqueda
+            window.location.href = "{{ url_for('ver_pedido') }}";
+        }, function(err) {
+            // Fallback si el copiado falla
+            window.location.href = "{{ url_for('ver_pedido') }}";
+        });
+    }
+</script>
+{% endblock %}

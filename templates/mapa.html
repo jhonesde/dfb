@@ -4,23 +4,71 @@
 
 {% block content %}
 <div class="container-fluid mt-4">
-    <h2 class="text-center mb-4">Ruta de Entregas</h2>
-
-    <div class="map-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="text-center mb-0">Ruta de Entregas</h2>
+        <!-- Botón para obtener ubicación -->
+        <button onclick="centrarEnMiUbicacion()" class="btn btn-primary" id="btn-gps">
+            <i class="fas fa-crosshairs me-2"></i>Mi Ubicación
+        </button>
+    </div>
+    
+    <!-- Contenedor del mapa -->
+    <div class="map-container position-relative shadow-sm">
         {{ mapa|safe }}
+        
+        <!-- Mensaje de carga (oculto por defecto) -->
+        <div id="loading-gps" class="position-absolute top-50 start-50 translate-middle bg-white p-3 rounded shadow d-none text-center">
+            <div class="spinner-border text-primary mb-2" role="status"></div>
+            <div>Obteniendo tu ubicación...</div>
+        </div>
     </div>
 </div>
 
 <style>
     .map-container {
         width: 100%;
-        height: 70vh; /* 70% de la altura de la ventana */
+        height: 75vh;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        overflow: hidden;
     }
     .map-container iframe {
         width: 100%;
         height: 100%;
-        border: 1px solid #ccc;
-        border-radius: 8px;
+        border: none;
     }
 </style>
+
+<script>
+    function centrarEnMiUbicacion() {
+        const btn = document.getElementById('btn-gps');
+        const loader = document.getElementById('loading-gps');
+
+        if (!navigator.geolocation) {
+            alert("Tu navegador no soporta geolocalización.");
+            return;
+        }
+
+        // Mostrar estado de carga
+        btn.disabled = true;
+        loader.classList.remove('d-none');
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const lon = position.coords.longitude;
+                
+                // Recargar la página enviando las coordenadas al servidor
+                // Esto hará que Flask vuelva a generar el mapa centrado en ti
+                window.location.href = `{{ url_for('ver_mapa') }}?lat=${lat}&lon=${lon}`;
+            },
+            (error) => {
+                loader.classList.add('d-none');
+                btn.disabled = false;
+                alert("No se pudo obtener tu ubicación. Asegúrate de dar permisos al navegador.");
+                console.error(error);
+            }
+        );
+    }
+</script>
 {% endblock %}
